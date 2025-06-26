@@ -1,0 +1,255 @@
+	<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voting System</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-image: url('background.jpg');
+    background-size: cover;
+    color: #fff;
+    text-align: center;
+  }
+  .container {
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    margin: 50px auto;
+    max-width: 800px;
+    border-radius: 10px;
+  }
+  .candidates-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+  }
+  .candidate {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 10px;
+    width: 150px;
+  }
+  img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+  }
+  button {
+    margin: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- Beep sound -->
+<audio id="beepSound" src="beep.mp3" preload="auto"></audio>
+
+<div class="container" id="loginPanel">
+  <h1>Admin Login</h1>
+  <input type="password" id="adminPassword" placeholder="Enter Admin Password"><br>
+  <button onclick="adminLogin()">Login</button>
+</div>
+
+<div class="container" id="mainMenu" style="display:none;">
+  <h1>Loyola School Voting </h1>
+  <button onclick="showAdmin()">Admin Panel</button>
+  <button onclick="showVoting()">Vote Now</button>
+  <button onclick="verifyResultAccess()">View Results</button>
+</div>
+
+<div class="container" id="adminPanel" style="display:none;">
+  <h2>Admin Panel - Manage Candidates</h2>
+  <input type="text" id="candidateName" placeholder="Candidate Name"><br>
+  <input type="text" id="candidatePhoto" placeholder="Candidate Photo "><br>
+  <button onclick="addCandidate()">Add Candidate</button><br>
+  <h3>Existing Candidates:</h3>
+  <div id="adminCandidatesList"></div>
+  <button onclick="resetVotes()">Reset Votes</button><br>
+  <button onclick="downloadResults()">Download Results</button><br>
+  <button onclick="backToMenu()">Back to Menu</button>
+</div>
+
+<div class="container" id="votingPanel" style="display:none;">
+  <h2>Vote for Your Favorite Candidate</h2>
+  <div id="candidatesList" class="candidates-grid"></div>
+  <br>
+  <br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+   
+  <button onclick="backToMenu()">Back to Menu</button>
+</div>
+
+<div class="container" id="resultsPanel" style="display:none;">
+  <h2>Voting Results</h2>
+  <div id="resultsList" class="candidates-grid"></div>
+  <button onclick="backToMenu()">Back to Menu</button>
+</div>
+
+<script>
+let candidates = [];
+const adminPass = '1234';  // Set your admin password here
+
+function adminLogin() {
+  const pass = document.getElementById('adminPassword').value;
+  if (pass === adminPass) {
+    document.getElementById('loginPanel').style.display = 'none';
+    document.getElementById('mainMenu').style.display = 'block';
+  } else {
+    alert('Incorrect Password!');
+  }
+}
+
+function backToMenu() {
+  document.getElementById('adminPanel').style.display = 'none';
+  document.getElementById('votingPanel').style.display = 'none';
+  document.getElementById('resultsPanel').style.display = 'none';
+  document.getElementById('mainMenu').style.display = 'block';
+}
+
+function showAdmin() {
+  document.getElementById('mainMenu').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'block';
+  displayAdminCandidates();
+}
+
+function showVoting() {
+  document.getElementById('mainMenu').style.display = 'none';
+  document.getElementById('votingPanel').style.display = 'block';
+  displayCandidates();
+}
+
+function verifyResultAccess() {
+  let pass = prompt("Enter password to view results:");
+  if (pass === adminPass) {
+    showResults();
+  } else {
+    alert("Incorrect password!");
+  }
+}
+
+function showResults() {
+  document.getElementById('mainMenu').style.display = 'none';
+  document.getElementById('resultsPanel').style.display = 'block';
+  displayResults();
+}
+
+function addCandidate() {
+  let name = document.getElementById('candidateName').value;
+  let photo = document.getElementById('candidatePhoto').value;
+
+  if (name && photo) {
+    candidates.push({name: name, photo: photo, votes: 0});
+    alert('Candidate Added!');
+    document.getElementById('candidateName').value = '';
+    document.getElementById('candidatePhoto').value = '';
+    displayAdminCandidates();
+  } else {
+    alert('Please enter name and photo URL');
+  }
+}
+
+function displayCandidates() {
+  let list = document.getElementById('candidatesList');
+  list.innerHTML = '';
+
+  candidates.forEach((candidate, index) => {
+    list.innerHTML += `
+      <div class="candidate">
+        <img src="${candidate.photo}" alt="${candidate.name}"><br>
+        <strong>${candidate.name}</strong><br>
+        <button onclick="vote(${index})">Vote</button>
+      </div>
+    `;
+  });
+}
+
+function displayAdminCandidates() {
+  let list = document.getElementById('adminCandidatesList');
+  list.innerHTML = '';
+
+  candidates.forEach((candidate, index) => {
+    list.innerHTML += `
+      <div class="candidate">
+        <img src="${candidate.photo}" alt="${candidate.name}"><br>
+        <strong>${candidate.name}</strong><br>
+        <button onclick="modifyCandidate(${index})">Modify</button>
+        <button onclick="deleteCandidate(${index})">Delete</button>
+      </div>
+    `;
+  });
+}
+
+function vote(index) {
+  candidates[index].votes++;
+  document.getElementById('beepSound').play(); // Play beep sound
+  alert('Vote Submitted!');
+}
+
+function modifyCandidate(index) {
+  let newName = prompt('Enter new name:', candidates[index].name);
+  let newPhoto = prompt('Enter new photo URL:', candidates[index].photo);
+  if(newName && newPhoto){
+    candidates[index].name = newName;
+    candidates[index].photo = newPhoto;
+    displayAdminCandidates();
+  }
+}
+
+function deleteCandidate(index) {
+  if(confirm('Are you sure you want to delete this candidate?')){
+    candidates.splice(index, 1);
+    displayAdminCandidates();
+  }
+}
+
+function displayResults() {
+  let list = document.getElementById('resultsList');
+  list.innerHTML = '';
+
+  candidates.forEach(candidate => {
+    list.innerHTML += `
+      <div class="candidate">
+        <img src="${candidate.photo}" alt="${candidate.name}"><br>
+        <strong>${candidate.name}</strong> - Votes: ${candidate.votes}<br>
+      </div>
+    `;
+  });
+}
+
+function resetVotes() {
+  if(confirm('Are you sure you want to reset all votes?')){
+    candidates.forEach(candidate => {
+      candidate.votes = 0;
+    });
+    alert('Votes Reset!');
+  }
+}
+
+function downloadResults() {
+  let resultText = 'Voting Results:\n';
+  candidates.forEach(candidate => {
+    resultText += `${candidate.name}: ${candidate.votes} votes\n`;
+  });
+
+  let blob = new Blob([resultText], { type: 'text/plain' });
+  let link = document.createElement('a');
+  link.href = window.URL.createObjectURL(blob);
+  link.download = 'VotingResults.txt';
+  link.click();
+}
+</script>
+</body>
+</html>
